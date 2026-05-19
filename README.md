@@ -9,7 +9,7 @@ Say things like:
 - `give me 90s Memphis rap, nothing too obvious`
 - `put on some 70s rock that I probably won't know in the kitchen`
 - `just one artist tonight: Sade`
-- `Look at my liked songs. Based on my taste, play some songs that I probably haven't heard but that I might like`
+- `look at my liked songs and play some I probably haven't heard but might like`
 - `I'm cleaning and I want to hear some upbeat house, no vocals`
 - `give me late 70s New York punk`
 - `I'm working late again`
@@ -31,7 +31,7 @@ It knows how to:
 
 ## Getting Started
 
-You will need
+SonosDJ runs on Windows, macOS, and Linux. You will need
 
 - Go on your `PATH`
 - either `claude` or `codex` on your `PATH`
@@ -60,7 +60,7 @@ Run it:
 sonosdj
 ```
 
-Or use a specific agent:
+If only one of `claude` and `codex` is on your `PATH`, SonosDJ uses that one. If both are available and you don't pick, SonosDJ asks. Force a specific agent:
 
 ```bash
 sonosdj --claude
@@ -81,6 +81,12 @@ sonosdj -p medium
 sonosdj -p high
 ```
 
+Permissiveness controls how far the DJ is willing to stray from a literal reading of your request:
+
+- `low` stays literal and predictable
+- `medium` stays close, but can branch out a bit (default)
+- `high` follows the mood and goes hunting, even if that means leaving the most obvious path. Ultimate discovery mode
+
 Turn on verbose startup output:
 
 ```bash
@@ -92,6 +98,17 @@ You can combine them:
 ```bash
 sonosdj --codex -p high -V
 ```
+
+## Flags
+
+| Flag | Meaning | Default |
+| --- | --- | --- |
+| `--claude` | Launch Claude directly | |
+| `--codex` | Launch Codex directly | |
+| `-r`, `--room` | Default Sonos room (skips the room question on startup) | none |
+| `-p`, `--permissive` | Default permissiveness: `low`, `medium`, or `high` | `medium` |
+| `-V`, `--verbose` | Print more startup detail | off |
+| `-h`, `--help` | Print usage and exit | |
 
 ## How It Behaves
 
@@ -105,17 +122,6 @@ If something is already playing, it tends to stay in that lane unless you tell i
 If nothing is playing, it will list the available Sonos rooms and ask where to play. Pass `-r` to skip that question.
 
 When launched as Claude, `Bash(sonos:*)` and `Bash(wait:*)` are pre-approved, so the DJ can act without a permission prompt on every command.
-
-## Flags
-
-| Flag | Meaning | Default |
-| --- | --- | --- |
-| `--claude` | Launch Claude directly | |
-| `--codex` | Launch Codex directly | |
-| `-r`, `--room` | Default Sonos room (skips the room question on startup) | none |
-| `-p`, `--permissive` | Default permissiveness: `low`, `medium`, or `high` | `medium` |
-| `-V`, `--verbose` | Print more startup detail | off |
-| `-h`, `--help` | Print usage and exit | |
 
 ## Startup
 
@@ -139,8 +145,6 @@ If startup fails, check these first:
 
 Useful commands:
 
-```bash
-sonos --version
-sonos discover
-sonos smapi services
-```
+- `sonos --version` — confirm the `sonos` CLI is installed and on your `PATH`
+- `sonos discover` — list the speakers visible on your network
+- `sonos smapi services` — show which music services (like Spotify) are linked in Sonos
