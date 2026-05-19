@@ -67,7 +67,7 @@ func run() error {
 		authRoom = rooms[0]
 	}
 	if err := checks.CheckSpotifyAuth(cmdr, authRoom); err != nil {
-		if flowErr := checks.RunSpotifyAuthFlow(cmdr, authRoom, os.Stdout, os.Stdin); flowErr != nil {
+		if flowErr := checks.RunSpotifyAuthFlow(cmdr, authRoom, askInstall, checks.OpenURLInBrowser, os.Stdout, os.Stdin); flowErr != nil {
 			return flowErr
 		}
 	}

@@ -56,6 +56,122 @@ func TestExtractCodeFindsAuthCode(t *testing.T) {
 	}
 }
 
+func TestExtractCodeFindsAuthCodeInLinkURL(t *testing.T) {
+	code := extractCode("Open this URL and link your account:\n  https://spotify-v5.ws.sonos.com/deviceLink/home?linkCode=OA9ZKON\n")
+	if code != "OA9ZKON" {
+		t.Fatalf("expected code OA9ZKON, got %q", code)
+	}
+}
+
+func TestExtractCodeFindsAuthCodeInCompletionCommand(t *testing.T) {
+	code := extractCode("Then run:\n  sonos auth smapi complete --service \"Spotify\" --code OA9ZKON --wait 5m\n")
+	if code != "OA9ZKON" {
+		t.Fatalf("expected code OA9ZKON, got %q", code)
+	}
+}
+
+func TestRunSpotifyAuthFlowCompletesAfterEnter(t *testing.T) {
+	cmdr := fakeCommander{
+		outputs: map[string]result{
+			"sonos auth smapi begin --name Living Room --service Spotify": {
+				output: "Service: Spotify\nOpen this URL and link your account:\n  https://spotify-v5.ws.sonos.com/deviceLink/home?linkCode=OA9ZKON\nThen run:\n  sonos auth smapi complete --service \"Spotify\" --code OA9ZKON --wait 5m\n",
+			},
+			"sonos auth smapi complete --service Spotify --code OA9ZKON --wait 5m": {output: "linked"},
+		},
+		counts: map[string]int{},
+	}
+
+	output := new(bytes.Buffer)
+	input := strings.NewReader("\n")
+	ask := func(string) (bool, error) { return false, nil }
+
+	if err := RunSpotifyAuthFlow(cmdr, "Living Room", ask, func(string) error { return nil }, output, input); err != nil {
+		t.Fatalf("RunSpotifyAuthFlow returned error: %v", err)
+	}
+
+	if cmdr.counts["sonos auth smapi complete --service Spotify --code OA9ZKON --wait 5m"] != 1 {
+		t.Fatalf("expected auth completion command to run once, got counts %#v", cmdr.counts)
+	}
+
+	rendered := output.String()
+	if strings.Contains(rendered, "Then run:") {
+		t.Fatalf("expected raw sonos CLI instructions to be hidden, got output %q", rendered)
+	}
+	if !strings.Contains(rendered, "Complete Spotify linking in your browser.") {
+		t.Fatalf("expected custom linking message, got output %q", rendered)
+	}
+	if !strings.Contains(rendered, "https://spotify-v5.ws.sonos.com/deviceLink/home?linkCode=OA9ZKON") {
+		t.Fatalf("expected auth URL in output, got %q", rendered)
+	}
+}
+
+func TestRunSpotifyAuthFlowOpensBrowserWhenAccepted(t *testing.T) {
+	cmdr := fakeCommander{
+		outputs: map[string]result{
+			"sonos auth smapi begin --name Living Room --service Spotify": {
+				output: "Open this URL and link your account:\n  https://spotify-v5.ws.sonos.com/deviceLink/home?linkCode=OA9ZKON\nThen run:\n  sonos auth smapi complete --service \"Spotify\" --code OA9ZKON --wait 5m\n",
+			},
+			"sonos auth smapi complete --service Spotify --code OA9ZKON --wait 5m": {output: "linked"},
+		},
+		counts: map[string]int{},
+	}
+
+	output := new(bytes.Buffer)
+	input := strings.NewReader("\n")
+	askCalls := 0
+	var opened string
+
+	ask := func(prompt string) (bool, error) {
+		askCalls++
+		if prompt != "Want to open this in your default browser?" {
+			t.Fatalf("unexpected prompt %q", prompt)
+		}
+		return true, nil
+	}
+
+	openBrowser := func(rawURL string) error {
+		opened = rawURL
+		return nil
+	}
+
+	if err := RunSpotifyAuthFlow(cmdr, "Living Room", ask, openBrowser, output, input); err != nil {
+		t.Fatalf("RunSpotifyAuthFlow returned error: %v", err)
+	}
+
+	if askCalls != 1 {
+		t.Fatalf("expected one browser prompt, got %d", askCalls)
+	}
+	if opened != "https://spotify-v5.ws.sonos.com/deviceLink/home?linkCode=OA9ZKON" {
+		t.Fatalf("expected browser to open auth URL, got %q", opened)
+	}
+}
+
+func TestRunSpotifyAuthFlowPrintsFallbackWhenBrowserOpenFails(t *testing.T) {
+	cmdr := fakeCommander{
+		outputs: map[string]result{
+			"sonos auth smapi begin --name Living Room --service Spotify": {
+				output: "Open this URL and link your account:\n  https://spotify-v5.ws.sonos.com/deviceLink/home?linkCode=OA9ZKON\nThen run:\n  sonos auth smapi complete --service \"Spotify\" --code OA9ZKON --wait 5m\n",
+			},
+			"sonos auth smapi complete --service Spotify --code OA9ZKON --wait 5m": {output: "linked"},
+		},
+		counts: map[string]int{},
+	}
+
+	output := new(bytes.Buffer)
+	input := strings.NewReader("\n")
+
+	ask := func(string) (bool, error) { return true, nil }
+	openBrowser := func(string) error { return errors.New("open failed") }
+
+	if err := RunSpotifyAuthFlow(cmdr, "Living Room", ask, openBrowser, output, input); err != nil {
+		t.Fatalf("RunSpotifyAuthFlow returned error: %v", err)
+	}
+
+	if !strings.Contains(output.String(), "Couldn't open automatically.") {
+		t.Fatalf("expected browser-open fallback message, got output %q", output.String())
+	}
+}
+
 func TestEnsureSonosCLIInstallsFromSteipeteRepo(t *testing.T) {
 	cmdr := fakeCommander{
 		outputs: map[string]result{
