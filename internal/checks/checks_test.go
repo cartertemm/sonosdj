@@ -33,19 +33,23 @@ func (f fakeCommander) Run(name string, args ...string) (string, error) {
 }
 
 func TestDiscoverSpeakersParsesRooms(t *testing.T) {
+	rawOutput := "Living Room\t192.168.0.10\tRINCON_1\nKitchen\t192.168.0.11\tRINCON_2\n"
 	cmdr := fakeCommander{
 		outputs: map[string]result{
-			"sonos discover": {output: "Living Room\t192.168.0.10\tRINCON_1\nKitchen\t192.168.0.11\tRINCON_2\n"},
+			"sonos discover": {output: rawOutput},
 		},
 	}
 
-	rooms, err := DiscoverSpeakers(cmdr)
+	rooms, output, err := DiscoverSpeakers(cmdr)
 	if err != nil {
 		t.Fatalf("DiscoverSpeakers returned error: %v", err)
 	}
 
 	if len(rooms) != 2 || rooms[0] != "Living Room" || rooms[1] != "Kitchen" {
 		t.Fatalf("unexpected rooms: %#v", rooms)
+	}
+	if output != rawOutput {
+		t.Fatalf("expected raw output %q, got %q", rawOutput, output)
 	}
 }
 

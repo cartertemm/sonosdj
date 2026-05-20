@@ -55,7 +55,7 @@ func run() error {
 	if err := checks.EnsureSonosCLI(cmdr, askInstall, os.Stdout, cfg.Verbose); err != nil {
 		return err
 	}
-	rooms, err := checks.DiscoverSpeakers(cmdr)
+	rooms, discoveredSpeakers, err := checks.DiscoverSpeakers(cmdr)
 	if err != nil {
 		return err
 	}
@@ -74,6 +74,6 @@ func run() error {
 	if cfg.Verbose {
 		fmt.Fprintf(os.Stdout, "Spotify auth check passed for %s.\n", authRoom)
 	}
-	cmd := launch.BuildCommand(selected, prompt.Build(cfg.Permissiveness, cfg.Room))
+	cmd := launch.BuildCommand(selected, prompt.Build(cfg.Permissiveness, cfg.Room, discoveredSpeakers))
 	return cmd.Run()
 }

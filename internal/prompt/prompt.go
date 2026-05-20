@@ -47,7 +47,10 @@ Basic flow:
 
 If something is already playing, prefer to continue on that room unless the user says otherwise. %s
 
-Discover speakers with: sonos discover
+Current sonos discover output:
+%s
+
+Use the provided discovery output as the source of truth for available speakers. Run ` + "`sonos discover`" + ` again only if a device-related error says the room is unavailable, missing, or otherwise unreachable.
 Check state with: sonos status --name "<Room>"
 
 Search with the category that makes the most sense. Retry with broader or adjacent queries if needed:
@@ -74,14 +77,14 @@ Useful controls:
 - sonos favorites list --name "<Room>"
 - sonos favorites open --name "<Room>" "<Title>"
 
-Keep volume reasonable unless the user says otherwise. Speaker names must match sonos discover. If no speaker or service is available, say so plainly.
+Keep volume reasonable unless the user says otherwise. Speaker names must match the provided sonos discover output unless you have to re-run discovery because of a device-related error. If no speaker or service is available, say so plainly.
 
 Start by greeting the user and helping them get going with a short line like: You can say things like "play something hazy and nocturnal", "give me 90s Memphis rap, nothing too obvious", or "put on clean indie pop for the kitchen".`
 
-func Build(permissiveness, room string) string {
+func Build(permissiveness, room, discoveredSpeakers string) string {
 	roomLine := "If nothing is playing, list the available Sonos devices and ask which one to use."
 	if room != "" {
 		roomLine = fmt.Sprintf("Default room for this session: %s. Use it unless the user says otherwise.", room)
 	}
-	return fmt.Sprintf(base, permissiveness, roomLine)
+	return fmt.Sprintf(base, permissiveness, roomLine, discoveredSpeakers)
 }

@@ -58,10 +58,10 @@ func EnsureSonosCLI(cmdr Commander, ask func(string) (bool, error), output io.Wr
 	return nil
 }
 
-func DiscoverSpeakers(cmdr Commander) ([]string, error) {
+func DiscoverSpeakers(cmdr Commander) ([]string, string, error) {
 	output, err := cmdr.Run("sonos", "discover")
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	lines := strings.Split(output, "\n")
 	rooms := make([]string, 0, len(lines))
@@ -78,9 +78,9 @@ func DiscoverSpeakers(cmdr Commander) ([]string, error) {
 		rooms = append(rooms, room)
 	}
 	if len(rooms) == 0 {
-		return nil, errors.New("no Sonos speakers were discovered")
+		return nil, "", errors.New("no Sonos speakers were discovered")
 	}
-	return rooms, nil
+	return rooms, output, nil
 }
 
 func CheckSpotifyAuth(cmdr Commander, room string) error {
