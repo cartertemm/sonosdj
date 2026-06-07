@@ -16,6 +16,7 @@ Say things like:
 
 It is meant to feel more like talking to a friend with taste than operating a music app.
 If you ever want something else, switch back to your terminal and **just ask**.
+If you're using Claude Code, you can type `/remote-control` to hand off the session to another machine with access to your account, such as your phone.
 
 ## What It Does
 
