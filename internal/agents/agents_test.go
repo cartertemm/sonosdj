@@ -9,6 +9,8 @@ import (
 
 type fakeLookPath map[string]string
 
+var _ LookPather = fakeLookPath{}
+
 func (f fakeLookPath) LookPath(name string) (string, error) {
 	path, ok := f[name]
 	if !ok {
