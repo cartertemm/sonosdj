@@ -12,6 +12,8 @@ type fakeCommander struct {
 	counts  map[string]int
 }
 
+var _ Commander = fakeCommander{}
+
 type result struct {
 	output string
 	err    error
