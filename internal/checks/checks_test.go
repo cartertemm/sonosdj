@@ -177,11 +177,12 @@ func TestRunSpotifyAuthFlowPrintsFallbackWhenBrowserOpenFails(t *testing.T) {
 }
 
 func TestEnsureSonosCLIInstallsFromSteipeteRepo(t *testing.T) {
+	installKey := "go install " + SonosInstallTarget
 	cmdr := fakeCommander{
 		outputs: map[string]result{
 			"sonos --version": {err: errors.New("missing")},
 			"go version":      {output: "go version go1.23.0"},
-			"go install github.com/steipete/sonoscli@latest": {output: ""},
+			installKey:        {output: ""},
 		},
 		counts: map[string]int{},
 	}
@@ -190,5 +191,8 @@ func TestEnsureSonosCLIInstallsFromSteipeteRepo(t *testing.T) {
 	err := EnsureSonosCLI(cmdr, ask, output, true)
 	if err != nil {
 		t.Fatalf("EnsureSonosCLI returned error: %v", err)
+	}
+	if cmdr.counts[installKey] != 1 {
+		t.Fatalf("expected install command %q to run once, got counts %#v", installKey, cmdr.counts)
 	}
 }
